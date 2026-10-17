@@ -62,3 +62,14 @@
 .userBtn:hover {
   background: var(--ts-surface);
 }
+
+.bizIcon {
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  background: var(--ts-surface);
+  color: var(--ts-muted);
+}

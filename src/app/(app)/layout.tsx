@@ -68,15 +68,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         <Group h="100%" px={{ base: 'md', md: 'xl' }} justify="space-between" wrap="nowrap">
           <Group gap="sm" wrap="nowrap">
             <Burger opened={opened} onClick={toggle} hiddenFrom="md" size="sm" aria-label="Open menu" />
-            <Box hiddenFrom="md">
-              <Logo size={30} />
-            </Box>
-            <Group gap={10} visibleFrom="md" wrap="nowrap">
-              <IconBuildingStore size={20} color={tokens.muted} />
-              <Text fw={700} fz={16} truncate maw={320}>
-                {membership.businessName}
-              </Text>
-            </Group>
+            <Logo size={32} />
           </Group>
           <Group gap="sm" wrap="nowrap">
             <Box visibleFrom="xs">
@@ -119,9 +111,19 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       <AppShell.Navbar className={classes.navbar}>
         <Stack h="100%" justify="space-between" p="md" gap="lg">
           <Stack gap="xl">
-            <Box px={8} pt={6} visibleFrom="md">
-              <Logo size={34} />
-            </Box>
+            <Group gap={12} wrap="nowrap" px={8} pt={4}>
+              <Box className={classes.bizIcon}>
+                <IconBuildingStore size={20} />
+              </Box>
+              <Box style={{ minWidth: 0 }}>
+                <Text fw={700} fz={15.5} lh={1.25} truncate>
+                  {membership.businessName}
+                </Text>
+                <Text fz={12.5} c="dimmed">
+                  Your business
+                </Text>
+              </Box>
+            </Group>
             <Stack gap={4} component="nav" aria-label="Main">
               {items.map((n) => {
                 const active = pathname === n.href || pathname.startsWith(`${n.href}/`);
@@ -145,7 +147,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                   {name}
                 </Text>
                 <Text fz={12.5} c="dimmed" truncate>
-                  {ROLE_LABEL[membership.role]} · {membership.businessName}
+                  {ROLE_LABEL[membership.role]}
                 </Text>
               </Box>
             </Group>
