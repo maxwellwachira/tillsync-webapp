@@ -1,31 +1,46 @@
 'use client';
 
-import { Alert, Box, CopyButton, Divider, Drawer, Group, Skeleton, Stack, Text, ThemeIcon, UnstyledButton } from '@mantine/core';
-import { IconCheck, IconCircleDashed, IconCopy, IconInfoCircle } from '@tabler/icons-react';
+import { Box, CopyButton, Drawer, Group, Skeleton, Text, UnstyledButton } from '@mantine/core';
+import { IconCheck, IconCopy } from '@tabler/icons-react';
 import { useEffect, useState } from 'react';
 
 import { useBusinessActions } from '@/lib/data';
-import { formatClockSeconds, formatDay } from '@/lib/format';
+import { formatAgo, formatClockSeconds, formatDay } from '@/lib/format';
 import { useSession } from '@/lib/session';
 import type { Payment } from '@/lib/types';
 import { tokens } from '@/theme';
 
 import { Money } from './Money';
 
-function Row({ k, children }: { k: string; children: React.ReactNode }) {
+function Row({ k, children, last }: { k: string; children: React.ReactNode; last?: boolean }) {
   return (
-    <Group justify="space-between" align="flex-start" wrap="nowrap" gap="lg" py={2}>
-      <Text fz={14} c="dimmed" style={{ flexShrink: 0 }}>
+    <Group justify="space-between" align="center" wrap="nowrap" gap="lg" mih={56} style={{ borderBottom: last ? 'none' : `1px solid ${tokens.divider}` }}>
+      <Text fz={14.5} c="dimmed" style={{ flexShrink: 0 }}>
         {k}
       </Text>
-      <Text fz={14.5} fw={600} ta="right" style={{ wordBreak: 'break-word' }}>
+      <Text fz={14.5} fw={600} ta="right" className="tnum" style={{ wordBreak: 'break-word' }}>
         {children}
       </Text>
     </Group>
   );
 }
 
-/** Everything known about one payment, and an honest line about what is and isn't verified. */
+function SectionLabel({ children }: { children: string }) {
+  return (
+    <Text fw={700} fz={12} c="dimmed" mt={32} mb={2} style={{ letterSpacing: 0.6 }}>
+      {children.toUpperCase()}
+    </Text>
+  );
+}
+
+/** How long the message took to reach the team: “Instantly”, “3 s later”, “1 min 5 s later”. */
+function delay(from: number, to: number): string {
+  const s = Math.max(0, Math.round((to - from) / 1000));
+  if (s <= 1) return 'Instantly';
+  return s < 60 ? `${s} s later` : `${Math.floor(s / 60)} min ${s % 60} s later`;
+}
+
+/** One payment, top to bottom: when it arrived, how much, who paid, the code to copy, then the quiet details. */
 export function PaymentDrawer({ payment, hidden, now, onClose }: { payment: Payment | null; hidden: boolean; now: number; onClose: () => void }) {
   const { membership } = useSession();
   const { getOriginalSms } = useBusinessActions();
@@ -45,101 +60,90 @@ export function PaymentDrawer({ payment, hidden, now, onClose }: { payment: Paym
   }, [code, canSeeSms]);
 
   const p = payment;
-  const path = p
-    ? [
-        { label: 'SMS received by the Till phone', time: formatClockSeconds(p.receivedAt), done: true },
-        { label: 'Delivered to the server', time: formatClockSeconds(p.syncedAt), done: true },
-        { label: 'Available to your team', time: formatClockSeconds(p.syncedAt), done: true },
-        { label: 'Independently verified', time: 'Not available', done: false },
-      ]
-    : [];
 
   return (
-    <Drawer opened={!!p} onClose={onClose} position="right" size={440} title={<Text fw={700} fz={17}>Payment details</Text>} padding="lg">
+    <Drawer opened={!!p} onClose={onClose} position="right" size={440} title={<Text fw={700} fz={17}>Payment</Text>} padding="lg">
       {p ? (
-        <Stack gap="lg">
-          <Box p="lg" style={{ background: tokens.brandTint, borderRadius: 20 }}>
-            <Text fz={12.5} fw={700} c="dimmed" style={{ letterSpacing: 0.6 }}>
-              PAYMENT RECEIVED · {formatDay(p.receivedAt, now).toUpperCase()}
-            </Text>
-            <Box mt={8}>
-              <Money amount={p.amount} size={44} hidden={hidden} />
-            </Box>
-            <Group gap={8} mt={10} wrap="nowrap">
-              <Text className="mono" fz={19} fw={600}>
-                {p.code}
+        <Box>
+          <Group justify="space-between" wrap="nowrap">
+            <Group gap={7} wrap="nowrap" h={30} px={13} style={{ borderRadius: 15, background: tokens.okBg }}>
+              <Box w={7} h={7} style={{ borderRadius: '50%', background: tokens.ok }} />
+              <Text fz={12.5} fw={700} c="ok.8">
+                Received
               </Text>
-              <CopyButton value={p.code} timeout={1800}>
-                {({ copied, copy }) => (
-                  <UnstyledButton onClick={copy} aria-label="Copy code" style={{ display: 'grid', placeItems: 'center', width: 30, height: 30, borderRadius: 8, color: copied ? tokens.ok : tokens.muted, background: copied ? tokens.okBg : 'transparent' }}>
-                    {copied ? <IconCheck size={17} /> : <IconCopy size={17} />}
-                  </UnstyledButton>
-                )}
-              </CopyButton>
             </Group>
-          </Box>
-
-          <Alert color="warn" variant="light" icon={<IconInfoCircle size={18} />} radius="md" title="SMS received, not independently verified">
-            For a large payment, confirm it on the M-Pesa statement before releasing goods.
-          </Alert>
-
-          <Stack gap={6}>
-            <Row k="Payer">{p.payerDisplay || '—'}</Row>
-            <Row k="Phone (as M-Pesa shows it)">
-              <span className="mono">{p.phoneMasked || '—'}</span>
-            </Row>
-            <Row k="Received">
-              {formatDay(p.receivedAt, now)} {formatClockSeconds(p.receivedAt)}
-            </Row>
-          </Stack>
-
-          <Divider />
-
-          <Stack gap="sm">
-            <Text fw={700} fz={13} c="dimmed" style={{ letterSpacing: 0.6 }}>
-              DELIVERY PATH
+            <Text fz={13} c="dimmed">
+              {formatAgo(p.receivedAt, now)}
             </Text>
-            {path.map((s) => (
-              <Group key={s.label} gap={12} wrap="nowrap">
-                <ThemeIcon size={22} radius="xl" variant={s.done ? 'filled' : 'outline'} color={s.done ? 'ok' : 'gray'} style={s.done ? undefined : { borderStyle: 'dashed' }}>
-                  {s.done ? <IconCheck size={13} /> : <IconCircleDashed size={13} />}
-                </ThemeIcon>
-                <Text fz={14} style={{ flex: 1 }} c={s.done ? undefined : 'dimmed'}>
-                  {s.label}
-                </Text>
-                <Text className="mono" fz={12} c="dimmed">
-                  {s.time}
-                </Text>
-              </Group>
-            ))}
-          </Stack>
+          </Group>
+
+          <Box mt={22}>
+            <Money amount={p.amount} size={46} hidden={hidden} />
+          </Box>
+          <Group gap={7} mt={10} wrap="nowrap" align="baseline">
+            <Text fz={16} style={{ color: tokens.subtle }}>
+              from
+            </Text>
+            <Text fz={22} fw={600} lh={1.3} style={{ minWidth: 0 }}>
+              {p.payerDisplay || 'an M-Pesa customer'}
+            </Text>
+          </Group>
+
+          <CopyButton value={p.code} timeout={1800}>
+            {({ copied, copy }) => (
+              <UnstyledButton onClick={copy} aria-label={`Copy code ${p.code}`} className="option-card" w="100%" mt={28} px={18} h={60} style={{ background: tokens.surface, borderRadius: 18 }}>
+                <Group justify="space-between" wrap="nowrap" h="100%">
+                  <Box>
+                    <Text fz={11} fw={700} c="dimmed" style={{ letterSpacing: 0.6 }}>
+                      M-PESA CODE
+                    </Text>
+                    <Text className="mono" fz={17} fw={600} lh={1.3}>
+                      {p.code}
+                    </Text>
+                  </Box>
+                  <Group gap={6} wrap="nowrap" c={copied ? 'ok.8' : 'brand.6'}>
+                    {copied ? <IconCheck size={18} /> : <IconCopy size={18} />}
+                    <Text fz={14} fw={700} c="inherit">
+                      {copied ? 'Copied' : 'Copy'}
+                    </Text>
+                  </Group>
+                </Group>
+              </UnstyledButton>
+            )}
+          </CopyButton>
+
+          <SectionLabel>Details</SectionLabel>
+          <Row k="Phone">
+            <span className="mono">{p.phoneMasked || '—'}</span>
+          </Row>
+          <Row k="Received">
+            {formatDay(p.receivedAt, now)}, {formatClockSeconds(p.receivedAt)}
+          </Row>
+          <Row k="Delivered to your team" last>
+            {delay(p.receivedAt, p.syncedAt)}
+          </Row>
 
           {canSeeSms ? (
             <>
-              <Divider />
-              <Stack gap={8}>
-                <Text fw={700} fz={13} c="dimmed" style={{ letterSpacing: 0.6 }}>
-                  ORIGINAL MESSAGE
-                </Text>
-                {sms?.code === p.code ? (
-                  sms.text ? (
-                    <Box p="md" style={{ background: tokens.surface, borderRadius: 14 }}>
-                      <Text className="mono" fz={12.5} style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word', lineHeight: 1.65, letterSpacing: 0 }}>
-                        {sms.text}
-                      </Text>
-                    </Box>
-                  ) : (
-                    <Text fz={14} c="dimmed">
-                      The original message isn’t available.
+              <SectionLabel>Original message</SectionLabel>
+              {sms?.code === p.code ? (
+                sms.text ? (
+                  <Box p="md" style={{ background: tokens.surface, borderRadius: 18 }}>
+                    <Text className="mono" fz={12.5} style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word', lineHeight: 1.65, letterSpacing: 0 }}>
+                      {sms.text}
                     </Text>
-                  )
+                  </Box>
                 ) : (
-                  <Skeleton h={84} radius="md" />
-                )}
-              </Stack>
+                  <Text fz={14} c="dimmed">
+                    The original message isn’t available.
+                  </Text>
+                )
+              ) : (
+                <Skeleton h={84} radius="md" />
+              )}
             </>
           ) : null}
-        </Stack>
+        </Box>
       ) : null}
     </Drawer>
   );
