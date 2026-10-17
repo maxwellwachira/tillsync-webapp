@@ -8,6 +8,7 @@ import { Page } from '@/components/PageHeader';
 import { PaymentDrawer } from '@/components/PaymentDrawer';
 import { PaymentsTable } from '@/components/PaymentsTable';
 import { downloadCsv, paymentsCsv } from '@/lib/csv';
+import { useClaims } from '@/lib/claims';
 import { usePaymentsRange, usePaymentsToday } from '@/lib/data';
 import { formatAmount, startOfDay } from '@/lib/format';
 import { useNow } from '@/lib/hooks';
@@ -27,6 +28,7 @@ const BANDS = [
 
 export default function Payments() {
   const { membership } = useSession();
+  const { claims } = useClaims();
   const now = useNow(30_000);
   const [hidden] = useHideAmounts();
   const { payments: live, loading, error } = usePaymentsToday();
@@ -68,7 +70,7 @@ export default function Payments() {
       subtitle={period === 'today' ? 'Everything received today, live' : `Everything received in the last ${period} days`}
       actions={
         owner ? (
-          <Button variant="default" leftSection={<IconDownload size={17} />} disabled={results.length === 0} onClick={() => downloadCsv(`tillsync-payments-${new Date(now).toISOString().slice(0, 10)}.csv`, paymentsCsv(results))}>
+          <Button variant="default" leftSection={<IconDownload size={17} />} disabled={results.length === 0} onClick={() => downloadCsv(`tillsync-payments-${new Date(now).toISOString().slice(0, 10)}.csv`, paymentsCsv(results, claims))}>
             Export CSV
           </Button>
         ) : undefined

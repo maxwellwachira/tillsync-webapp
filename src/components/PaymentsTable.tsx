@@ -1,12 +1,13 @@
 'use client';
 
-import { Group, Table, Text } from '@mantine/core';
+import { Box, Group, Table, Text } from '@mantine/core';
 import { IconArrowDownLeft } from '@tabler/icons-react';
 
 import { formatAgo, formatClock, formatDay } from '@/lib/format';
 import type { Payment } from '@/lib/types';
 import { tokens } from '@/theme';
 
+import { ClaimCell } from './ClaimCell';
 import { Money } from './Money';
 
 type Props = {
@@ -25,8 +26,8 @@ export function PaymentsTable({ payments, now, hidden, onSelect, withDay }: Prop
       <Table verticalSpacing="sm" highlightOnHover={false} style={{ borderCollapse: 'separate', borderSpacing: 0 }}>
         <Table.Thead>
           <Table.Tr>
-            {['Amount', 'Code', 'Payer', 'Phone', 'Received'].map((h, i) => (
-              <Table.Th key={h} visibleFrom={i === 1 || i === 3 ? 'sm' : undefined} ta={i === 4 ? 'right' : undefined} fz={12.5} fw={600} c="dimmed" style={{ borderBottom: `1px solid ${tokens.line}`, paddingTop: 10, paddingBottom: 10 }}>
+            {['Amount', 'Code', 'Payer', 'Phone', 'Sold by', 'Received'].map((h, i) => (
+              <Table.Th key={h} visibleFrom={i === 1 || i === 2 || i === 3 ? 'sm' : undefined} ta={i === 5 ? 'right' : undefined} fz={12.5} fw={600} c="dimmed" style={{ borderBottom: `1px solid ${tokens.line}`, paddingTop: 10, paddingBottom: 10 }}>
                 {h}
               </Table.Th>
             ))}
@@ -53,7 +54,13 @@ export function PaymentsTable({ payments, now, hidden, onSelect, withDay }: Prop
                   <span style={{ width: 34, height: 34, borderRadius: '50%', background: tokens.okBg, display: 'grid', placeItems: 'center', flexShrink: 0 }}>
                     <IconArrowDownLeft size={18} color={tokens.okText} />
                   </span>
-                  <Money amount={p.amount} size={19} hidden={hidden} />
+                  <Box>
+                    <Money amount={p.amount} size={19} hidden={hidden} />
+                    {/* On a phone the Payer column is hidden; the name sits under the amount instead. */}
+                    <Text hiddenFrom="sm" fz={12.5} c="dimmed" maw={150} truncate>
+                      {p.payerDisplay || '—'}
+                    </Text>
+                  </Box>
                 </Group>
               </Table.Td>
               <Table.Td visibleFrom="sm" style={{ borderBottom: `1px solid ${tokens.divider}` }}>
@@ -61,8 +68,8 @@ export function PaymentsTable({ payments, now, hidden, onSelect, withDay }: Prop
                   {p.code}
                 </Text>
               </Table.Td>
-              <Table.Td style={{ borderBottom: `1px solid ${tokens.divider}` }}>
-                <Text fz={14.5} fw={500} maw={{ base: 110, sm: 220 }} truncate>
+              <Table.Td visibleFrom="sm" style={{ borderBottom: `1px solid ${tokens.divider}` }}>
+                <Text fz={14.5} fw={500} maw={220} truncate>
                   {p.payerDisplay || '—'}
                 </Text>
               </Table.Td>
@@ -70,6 +77,9 @@ export function PaymentsTable({ payments, now, hidden, onSelect, withDay }: Prop
                 <Text className="mono" fz={13} c="dimmed">
                   {p.phoneMasked || '—'}
                 </Text>
+              </Table.Td>
+              <Table.Td style={{ borderBottom: `1px solid ${tokens.divider}` }}>
+                <ClaimCell payment={p} now={now} />
               </Table.Td>
               <Table.Td ta="right" style={{ borderBottom: `1px solid ${tokens.divider}` }}>
                 <Text fz={14} fw={600} className="tnum">

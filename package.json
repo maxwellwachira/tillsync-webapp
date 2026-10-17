@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test": "node --experimental-strip-types --test test/sales.test.ts"
   },
   "dependencies": {
     "@mantine/charts": "^9.7.3",

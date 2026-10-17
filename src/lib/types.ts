@@ -57,3 +57,11 @@ export const BUSINESS_TYPES = ['Petrol station', 'Shop', 'Restaurant', 'Supermar
 export type BusinessType = (typeof BUSINESS_TYPES)[number];
 
 export const ROLE_LABEL: Record<Role, string> = { owner: 'Owner', attendant: 'Attendant', till: 'Till phone' };
+
+/** Who served a sale. The document id is the payment's code, so a sale has at most one claim. */
+export type Claim = {
+  code: string;
+  uid: string;
+  displayName: string;
+  claimedAt: number;
+};

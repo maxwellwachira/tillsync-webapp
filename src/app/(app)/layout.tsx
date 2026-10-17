@@ -2,12 +2,13 @@
 
 import { AppShell, Avatar, Box, Burger, Divider, Group, Menu, Stack, Text, UnstyledButton } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
-import { IconBuildingStore, IconChevronDown, IconCreditCard, IconDeviceMobile, IconEye, IconEyeOff, IconHome2, IconLogout, IconSettings, IconUsers } from '@tabler/icons-react';
+import { IconBuildingStore, IconChecklist, IconChevronDown, IconCreditCard, IconDeviceMobile, IconEye, IconEyeOff, IconHome2, IconLogout, IconSettings, IconUsers } from '@tabler/icons-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 
 import { Logo } from '@/components/Logo';
+import { ClaimsProvider } from '@/lib/claims';
 import { Splash } from '@/components/Splash';
 import { StatusPill } from '@/components/StatusPill';
 import { useDevices } from '@/lib/data';
@@ -25,6 +26,7 @@ import classes from './shell.module.css';
 const NAV: { href: string; label: string; icon: typeof IconHome2; roles: Role[] }[] = [
   { href: '/home', label: 'Home', icon: IconHome2, roles: ['owner'] },
   { href: '/payments', label: 'Payments', icon: IconCreditCard, roles: ['owner', 'attendant'] },
+  { href: '/sales', label: 'My sales', icon: IconChecklist, roles: ['attendant'] },
   { href: '/team', label: 'Team', icon: IconUsers, roles: ['owner'] },
   { href: '/devices', label: 'Devices', icon: IconDeviceMobile, roles: ['owner', 'attendant'] },
   { href: '/account', label: 'Account', icon: IconSettings, roles: ['owner', 'attendant'] },
@@ -155,7 +157,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         </Stack>
       </AppShell.Navbar>
 
-      <AppShell.Main className={classes.main}>{children}</AppShell.Main>
+      <AppShell.Main className={classes.main}>
+        <ClaimsProvider>{children}</ClaimsProvider>
+      </AppShell.Main>
     </AppShell>
   );
 }

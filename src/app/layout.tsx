@@ -30,7 +30,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body>
         <MantineProvider theme={theme} forceColorScheme="light">
-          <Notifications position="top-right" />
+          <Notifications position="bottom-center" />
           <SessionProvider>{children}</SessionProvider>
         </MantineProvider>
       </body>

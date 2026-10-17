@@ -10,7 +10,10 @@ import { Page } from '@/components/PageHeader';
 import { PaymentCard } from '@/components/PaymentCard';
 import { PaymentDrawer } from '@/components/PaymentDrawer';
 import { PaymentsTable } from '@/components/PaymentsTable';
+import { SalesByPerson } from '@/components/SalesByPerson';
 import { StatCard } from '@/components/StatCard';
+import { useClaims } from '@/lib/claims';
+import { salesByPerson } from '@/lib/sales';
 import { useDevices, usePaymentsRange, usePaymentsToday } from '@/lib/data';
 import { formatAmount, formatClock, greeting, startOfDay } from '@/lib/format';
 import { useNow, useYesterdaySoFar } from '@/lib/hooks';
@@ -23,7 +26,8 @@ import { tokens } from '@/theme';
 const DAYS = 7;
 
 export default function Home() {
-  const { membership } = useSession();
+  const { membership, user } = useSession();
+  const { claims } = useClaims();
   const { payments: all, loading } = usePaymentsToday();
   const { devices } = useDevices();
   const now = useNow(30_000);
@@ -34,6 +38,7 @@ export default function Home() {
   // Today only (the list is live and can outlive midnight).
   const today = useMemo(() => onlyToday(all, now), [all, now]);
   const stats = useMemo(() => dayStats(today, now), [today, now]);
+  const split = useMemo(() => salesByPerson(today, claims), [today, claims]);
 
   // The earlier days come once; today's come live, so the last bar moves as payments arrive.
   const dayStart = startOfDay(now);
@@ -86,6 +91,8 @@ export default function Home() {
       </Grid>
 
       <DaysChart days={days} hidden={hidden} now={now} />
+
+      {today.length > 0 ? <SalesByPerson sales={split} myUid={user?.uid ?? null} hidden={hidden} /> : null}
 
       <Paper withBorder style={{ borderColor: tokens.line, overflow: 'hidden' }}>
         <Group justify="space-between" p="lg" pb="xs">
