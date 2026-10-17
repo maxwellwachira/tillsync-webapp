@@ -1,36 +1,46 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# TillSync web
 
-## Getting Started
+The web dashboard for TillSync: the same payments, team and device views as the mobile app, on a bigger screen.
+Next.js (App Router) + Mantine 9, talking straight to Firebase (Auth + Firestore). There is no separate backend:
+the Firestore security rules are the boundary, exactly as in the mobile app.
 
-First, run the development server:
+Totals are counted from M-Pesa messages read on the Till phone. They are never presented as verified revenue.
+
+## Run it
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+cp .env.example .env.local   # fill in the Firebase web app values
+npm run dev                  # http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+| Variable | Purpose |
+| --- | --- |
+| `NEXT_PUBLIC_FIREBASE_API_KEY`, `..._AUTH_DOMAIN`, `..._PROJECT_ID`, `..._APP_ID` | Firebase web app config (Project settings → Your apps) |
+| `NEXT_PUBLIC_USE_EMULATORS` | `true` to use the local Auth (9099) and Firestore (8080) emulators |
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Test without touching production
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Start the emulators and seed them from the `firebase` folder, then run with `NEXT_PUBLIC_USE_EMULATORS=true npm run dev`.
+Seeded accounts (password `demo1234`): `owner@demo.test`, `attendant@demo.test`, `supervisor@demo.test`, `nobody@demo.test`.
 
-## Learn More
+## What is in it
 
-To learn more about Next.js, take a look at the following resources:
+- Sign in with email/password or Google, password reset, create account
+- Onboarding: create a business, or join one by sharing your account ID with the owner
+- Home: today's total, comparison with yesterday at the same time, 7-day chart, latest payments (live)
+- Payments: search, Today / 7 / 30 days, amount filters, CSV export (owner), payment details with the original message for those allowed
+- Team (owner): add attendants or the Till phone by account ID, per-person permissions, remove access
+- Devices: Till phone health (reporting / quiet / not reporting) with advice
+- Account: profile, rename business, account ID, sign out
+- Hide-amounts toggle, responsive down to phone width
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Scripts
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+`npm run dev`, `npm run build`, `npm run start`, `npm run lint`.
 
-## Deploy on Vercel
+## Deploy
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+All pages are client-rendered, so it deploys anywhere Next.js does (Vercel, Firebase App Hosting, a Node host).
+Set the four `NEXT_PUBLIC_FIREBASE_*` variables, keep `NEXT_PUBLIC_USE_EMULATORS=false`, and add the site's domain to
+Firebase Auth → Settings → Authorized domains (needed for Google sign-in).
