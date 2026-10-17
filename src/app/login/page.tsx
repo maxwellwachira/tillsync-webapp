@@ -65,7 +65,8 @@ function Preview() {
 export default function LoginPage() {
   const { ok } = useGate(['signedOut', 'loading', 'error']);
   const { status, signInEmail, signUpEmail, signInGoogle, resetPassword } = useSession();
-  const [mode, setMode] = useState<'signin' | 'signup'>('signin');
+  // The website links to /login?mode=signup so “Create your business” opens the sign-up form.
+  const [mode, setMode] = useState<'signin' | 'signup'>(() => (typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('mode') === 'signup' ? 'signup' : 'signin'));
   const [busy, setBusy] = useState<'email' | 'google' | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
