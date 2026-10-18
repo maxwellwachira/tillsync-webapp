@@ -38,6 +38,7 @@ export default function Payments() {
   const [period, setPeriod] = useState<'today' | '7' | '30'>('today');
   const [q, setQ] = useState('');
   const [band, setBand] = useState('all');
+  const [status, setStatus] = useState<'all' | 'claimed' | 'unclaimed'>('all');
   const [page, setPage] = useState(1);
   const [selected, setSelected] = useState<Payment | null>(null);
 
@@ -54,14 +55,15 @@ export default function Payments() {
   const query = q.trim().toLowerCase().replace(/,/g, '');
   const results = useMemo(() => {
     const test = BANDS.find((b) => b.value === band)!.test;
-    return pool.filter((p) => test(p.amount) && (!query || p.code.toLowerCase().includes(query) || String(p.amount).includes(query) || p.payerDisplay.toLowerCase().includes(query)));
-  }, [pool, query, band]);
+    return pool.filter((p) => test(p.amount) && (status === 'all' || (status === 'claimed') === claims.has(p.code)) && (!query || p.code.toLowerCase().includes(query) || String(p.amount).includes(query) || p.payerDisplay.toLowerCase().includes(query)));
+  }, [pool, query, band, status, claims]);
 
   const pages = Math.max(1, Math.ceil(results.length / PAGE_SIZE));
   const current = Math.min(page, pages);
   const visible = results.slice((current - 1) * PAGE_SIZE, current * PAGE_SIZE);
   const total = results.reduce((s, p) => s + p.amount, 0);
-  const filtering = query !== '' || band !== 'all';
+  const filtering = query !== '' || band !== 'all' || status !== 'all';
+  const unclaimedCount = useMemo(() => pool.filter((p) => !claims.has(p.code) && (owner || now - p.receivedAt < 24 * 3_600_000)).length, [pool, claims, owner, now]);
   const busy = loading || (days > 0 && loadingEarlier);
 
   return (
@@ -107,6 +109,20 @@ export default function Payments() {
             />
           ) : null}
         </Group>
+        <SegmentedControl
+          value={status}
+          onChange={(v) => {
+            setStatus(v as typeof status);
+            setPage(1);
+          }}
+          data={[
+            { value: 'all', label: 'All' },
+            { value: 'claimed', label: 'Claimed' },
+            { value: 'unclaimed', label: `Unclaimed${unclaimedCount ? ` · ${unclaimedCount}` : ''}` },
+          ]}
+          aria-label="Which payments"
+          w="fit-content"
+        />
         <Chip.Group multiple={false} value={band} onChange={(v) => { setBand(v); setPage(1); }}>
           <Group gap={8}>
             {BANDS.map((b) => (
@@ -121,7 +137,7 @@ export default function Payments() {
       <Paper withBorder style={{ borderColor: tokens.line, overflow: 'hidden' }}>
         <Group justify="space-between" px="lg" py="md" style={{ borderBottom: `1px solid ${tokens.line}` }}>
           <Text fz={14} c="dimmed">
-            {busy ? 'Loading…' : `${results.length} ${results.length === 1 ? 'payment' : 'payments'}${filtering ? ' match' : ''}`}
+            {busy ? 'Loading…' : status !== 'all' ? `${results.length} ${status}` : `${results.length} ${results.length === 1 ? 'payment' : 'payments'}${filtering ? ' match' : ''}`}
           </Text>
           <Text fz={14} fw={600} className="tnum">
             {busy || results.length === 0 ? '' : hidden ? 'KSh ••••' : `KSh ${formatAmount(total)}`}
@@ -142,9 +158,13 @@ export default function Payments() {
         ) : results.length === 0 ? (
           <Stack align="center" gap={6} py={56} px="lg">
             <IconInbox size={32} color={tokens.subtle} />
-            <Text fw={600}>{filtering ? 'Nothing matches' : period === 'today' ? 'No payments yet today' : 'No payments in this period'}</Text>
+            <Text fw={600}>{status === 'unclaimed' && !query && band === 'all' ? 'Nothing is unclaimed' : status === 'claimed' && !query && band === 'all' ? 'Nothing has been claimed yet' : filtering ? 'Nothing matches' : period === 'today' ? 'No payments yet today' : 'No payments in this period'}</Text>
             <Text c="dimmed" fz={14} ta="center" maw={420}>
-              {filtering
+              {status === 'unclaimed' && !query && band === 'all'
+                ? 'Every payment here has a name on it.'
+                : status === 'claimed' && !query && band === 'all'
+                  ? 'Payments appear here once someone claims them.'
+                  : filtering
                 ? 'Try part of the code, the amount without commas, or clear the filters. If the payment is real, it may still be on its way from the Till phone.'
                 : 'When a customer pays the Till, it shows here within seconds.'}
             </Text>
@@ -156,6 +176,7 @@ export default function Payments() {
                 onClick={() => {
                   setQ('');
                   setBand('all');
+                  setStatus('all');
                 }}
               >
                 Clear filters

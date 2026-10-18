@@ -8,12 +8,12 @@ import { startOfDay } from './format';
 import { useSession } from './session';
 import type { Device, Member, Payment, Role } from './types';
 
-const ms = (v: unknown): number | null => {
+export const ms = (v: unknown): number | null => {
   const t = v as { toMillis?: () => number } | null | undefined;
   return t?.toMillis ? t.toMillis() : null;
 };
 
-function toPayment(id: string, x: Record<string, unknown>): Payment {
+export function toPayment(id: string, x: Record<string, unknown>): Payment {
   const received = ms(x.receivedAt) ?? Date.now();
   return {
     code: id,

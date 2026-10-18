@@ -2,7 +2,7 @@
 
 import { AppShell, Avatar, Box, Burger, Divider, Group, Menu, Stack, Text, UnstyledButton } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
-import { IconBuildingStore, IconChecklist, IconChevronDown, IconCreditCard, IconDeviceMobile, IconEye, IconEyeOff, IconHome2, IconLogout, IconSettings, IconUsers } from '@tabler/icons-react';
+import { IconBuildingStore, IconChartBar, IconChecklist, IconChevronDown, IconCreditCard, IconDeviceMobile, IconEye, IconEyeOff, IconHome2, IconLogout, IconSettings, IconUsers } from '@tabler/icons-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect } from 'react';
@@ -27,6 +27,7 @@ const NAV: { href: string; label: string; icon: typeof IconHome2; roles: Role[] 
   { href: '/home', label: 'Home', icon: IconHome2, roles: ['owner'] },
   { href: '/payments', label: 'Payments', icon: IconCreditCard, roles: ['owner', 'attendant'] },
   { href: '/sales', label: 'My sales', icon: IconChecklist, roles: ['attendant'] },
+  { href: '/reports', label: 'Reports', icon: IconChartBar, roles: ['owner'] },
   { href: '/team', label: 'Team', icon: IconUsers, roles: ['owner'] },
   { href: '/devices', label: 'Devices', icon: IconDeviceMobile, roles: ['owner', 'attendant'] },
   { href: '/account', label: 'Account', icon: IconSettings, roles: ['owner', 'attendant'] },
