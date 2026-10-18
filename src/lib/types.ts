@@ -13,6 +13,10 @@ export type Membership = {
   businessType: string;
   role: Role;
   displayName: string;
+  /** The person's own phone number, as they typed it. May be empty. */
+  phone: string;
+  /** A small JPEG as a data URL, or null for no photo. */
+  photo: string | null;
   permissions: Permissions;
   /** The owner chose to use their own phone as a Till. */
   tillOnOwnerPhone: boolean;
@@ -35,6 +39,8 @@ export type Payment = {
 export type Member = {
   uid: string;
   displayName: string;
+  phone: string;
+  photo: string | null;
   role: Role;
   status: string;
   permissions: Record<string, boolean>;

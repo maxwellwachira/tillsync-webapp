@@ -145,6 +145,8 @@ export function useMembers(): { members: Member[] | null; error: boolean } {
               return {
                 uid: d.id,
                 displayName: String(x.displayName ?? 'Unnamed'),
+                phone: String(x.phone ?? ''),
+                photo: typeof x.photo === 'string' && x.photo.startsWith('data:image/jpeg;base64,') ? x.photo : null,
                 role: ROLES.find((r) => r === x.role) ?? 'attendant',
                 status: String(x.status ?? 'active'),
                 permissions: Object.fromEntries(Object.entries((x.permissions ?? {}) as Record<string, unknown>).map(([k, v]) => [k, v === true])),

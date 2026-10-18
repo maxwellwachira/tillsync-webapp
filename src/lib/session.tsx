@@ -1,16 +1,20 @@
 'use client';
 
 import {
+  EmailAuthProvider,
   GoogleAuthProvider,
   createUserWithEmailAndPassword,
   onAuthStateChanged,
   sendPasswordResetEmail,
   signInWithEmailAndPassword,
   signInWithPopup,
+  reauthenticateWithCredential,
   signOut as fbSignOut,
+  updatePassword,
+  updateProfile,
   type User,
 } from 'firebase/auth';
-import { collection, collectionGroup, doc, getDoc, getDocs, limit, query, serverTimestamp, where, writeBatch } from 'firebase/firestore';
+import { collection, collectionGroup, deleteField, doc, getDoc, getDocs, limit, query, serverTimestamp, updateDoc, where, writeBatch } from 'firebase/firestore';
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 
 import { auth, db } from './firebase';
@@ -47,6 +51,11 @@ type Ctx = {
   signInGoogle: () => Promise<'ok' | 'cancelled'>;
   resetPassword: (email: string) => Promise<void>;
   createBusiness: (input: { name: string; type: BusinessType; displayName: string }) => Promise<void>;
+  /** Saves the signed-in person's own name, phone number and profile photo (a JPEG data URL, or null to remove it). */
+  saveProfile: (input: { displayName: string; phone: string; photo: string | null | undefined }) => Promise<void>;
+  /** Whether this account signs in with a password (and so can change it). Google accounts cannot. */
+  canChangePassword: boolean;
+  changePassword: (current: string, next: string) => Promise<void>;
 };
 
 const SessionContext = createContext<Ctx | null>(null);
@@ -73,6 +82,8 @@ async function loadMembership(uid: string): Promise<Membership | null> {
     businessType: (biz.data()?.type as string | undefined) ?? 'Other',
     role,
     displayName: (m.displayName as string | undefined) ?? '',
+    phone: (m.phone as string | undefined) ?? '',
+    photo: typeof m.photo === 'string' && m.photo.startsWith('data:image/jpeg;base64,') ? m.photo : null,
     permissions: role === 'owner' ? ALL : { seeOriginalSms: p.seeOriginalSms === true, searchHistory: p.searchHistory === true, receiveAlerts: p.alerts !== false },
     tillOnOwnerPhone: biz.data()?.settings?.tillOnOwnerPhone === true,
   };
@@ -145,6 +156,38 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         try {
           await sendPasswordResetEmail(auth, email.trim());
         } catch (e) {
+          throw friendly(e);
+        }
+      },
+      canChangePassword: !!auth.currentUser?.providerData.some((p) => p.providerId === 'password'),
+      saveProfile: async ({ displayName, phone, photo }) => {
+        const me = auth.currentUser;
+        const m = membership;
+        if (!me || !m) throw new FriendlyError('Please sign in again.');
+        const update: Record<string, unknown> = { displayName: displayName.trim(), phone: phone.trim() };
+        if (photo === null) update.photo = deleteField();
+        else if (photo) update.photo = photo;
+        try {
+          await updateDoc(doc(db, 'businesses', m.businessId, 'members', me.uid), update);
+          await updateProfile(me, { displayName: displayName.trim() }).catch(() => undefined);
+        } catch (e) {
+          const code = String((e as { code?: string })?.code ?? '');
+          if (/permission-denied/.test(code)) throw new FriendlyError('Those details were not accepted. Check the name, phone number and photo.');
+          throw friendly(e);
+        }
+        await resolve(me);
+      },
+      changePassword: async (current, next) => {
+        const me = auth.currentUser;
+        if (!me?.email) throw new FriendlyError('This account has no password.');
+        try {
+          await reauthenticateWithCredential(me, EmailAuthProvider.credential(me.email, current));
+          await updatePassword(me, next);
+        } catch (e) {
+          const code = String((e as { code?: string })?.code ?? '');
+          if (/wrong-password|invalid-credential|invalid-login/.test(code)) throw new FriendlyError('Your current password is not right.');
+          if (/weak-password/.test(code)) throw new FriendlyError('Use at least 6 characters for the new password.');
+          if (/too-many-requests/.test(code)) throw new FriendlyError('Too many tries. Wait a few minutes and try again.');
           throw friendly(e);
         }
       },

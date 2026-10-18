@@ -1,6 +1,6 @@
 'use client';
 
-import { AppShell, Avatar, Box, Burger, Divider, Group, Menu, Stack, Text, UnstyledButton } from '@mantine/core';
+import { AppShell, Box, Burger, Divider, Group, Menu, Stack, Text, UnstyledButton } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { IconBuildingStore, IconChartBar, IconChecklist, IconChevronDown, IconCreditCard, IconDeviceMobile, IconEye, IconEyeOff, IconHome2, IconLogout, IconSettings, IconUsers } from '@tabler/icons-react';
 import Link from 'next/link';
@@ -8,11 +8,11 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 
 import { Logo } from '@/components/Logo';
+import { UserAvatar } from '@/components/UserAvatar';
 import { ClaimsProvider } from '@/lib/claims';
 import { Splash } from '@/components/Splash';
 import { StatusPill } from '@/components/StatusPill';
 import { useDevices } from '@/lib/data';
-import { initials } from '@/lib/format';
 import { useNow } from '@/lib/hooks';
 import { useHideAmounts } from '@/lib/privacy';
 import { useSession } from '@/lib/session';
@@ -83,9 +83,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             <Menu position="bottom-end" width={240} shadow="md" radius="md">
               <Menu.Target>
                 <UnstyledButton className={classes.userBtn} aria-label="Account menu">
-                  <Avatar color="brand" radius="xl" size={34}>
-                    {initials(name)}
-                  </Avatar>
+                  <UserAvatar name={name} photo={membership.photo} size={34} />
                   <IconChevronDown size={16} color={tokens.muted} />
                 </UnstyledButton>
               </Menu.Target>
@@ -142,9 +140,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           <Stack gap="sm">
             <Divider />
             <Group gap="sm" wrap="nowrap" px={6}>
-              <Avatar color="brand" radius="xl" size={38}>
-                {initials(name)}
-              </Avatar>
+              <UserAvatar name={name} photo={membership.photo} size={38} />
               <Box style={{ minWidth: 0 }}>
                 <Text fw={600} fz={14} truncate>
                   {name}

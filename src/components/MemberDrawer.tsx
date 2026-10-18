@@ -1,14 +1,15 @@
 'use client';
 
-import { Avatar, Box, Button, Drawer, Group, Modal, Stack, Switch, Text } from '@mantine/core';
+import { Box, Button, Drawer, Group, Modal, Stack, Switch, Text } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { IconCheck } from '@tabler/icons-react';
 import { useState } from 'react';
 
 import { useBusinessActions } from '@/lib/data';
-import { initials } from '@/lib/format';
 import { PERMISSION_OPTIONS } from '@/lib/permissions';
 import { ROLE_LABEL, type Member } from '@/lib/types';
+
+import { UserAvatar } from './UserAvatar';
 
 /** Change what one person can see, or end their access. Both take effect immediately. */
 export function MemberDrawer({ member, onClose }: { member: Member | null; onClose: () => void }) {
@@ -47,9 +48,7 @@ export function MemberDrawer({ member, onClose }: { member: Member | null; onClo
         {m ? (
           <Stack gap="xl">
             <Group gap="md" wrap="nowrap">
-              <Avatar color="brand" radius="xl" size={52}>
-                {initials(m.displayName)}
-              </Avatar>
+              <UserAvatar name={m.displayName} photo={m.photo} size={52} />
               <Box style={{ minWidth: 0 }}>
                 <Text fw={700} fz={18} truncate>
                   {m.displayName}

@@ -1,6 +1,6 @@
 'use client';
 
-import { Alert, Avatar, Badge, Button, Group, Loader, Paper, Stack, Table, Text } from '@mantine/core';
+import { Alert, Badge, Button, Group, Loader, Paper, Stack, Table, Text } from '@mantine/core';
 import { IconChevronRight, IconInfoCircle, IconUserPlus } from '@tabler/icons-react';
 import { useSearchParams } from 'next/navigation';
 import { Suspense, useState } from 'react';
@@ -8,8 +8,8 @@ import { Suspense, useState } from 'react';
 import { AddMemberModal } from '@/components/AddMemberModal';
 import { MemberDrawer } from '@/components/MemberDrawer';
 import { Page } from '@/components/PageHeader';
+import { UserAvatar } from '@/components/UserAvatar';
 import { useMembers } from '@/lib/data';
-import { initials } from '@/lib/format';
 import { PERMISSION_OPTIONS } from '@/lib/permissions';
 import { useSession } from '@/lib/session';
 import { ROLE_LABEL, type Member } from '@/lib/types';
@@ -80,9 +80,7 @@ function TeamContent() {
                     >
                       <Table.Td style={{ borderBottom: `1px solid ${tokens.divider}` }}>
                         <Group gap="md" wrap="nowrap">
-                          <Avatar color="brand" radius="xl" size={38}>
-                            {initials(m.displayName)}
-                          </Avatar>
+                          <UserAvatar name={m.displayName} photo={m.photo} size={38} />
                           <Text fw={600} fz={15}>
                             {m.displayName}
                             {me ? <Text span c="dimmed" fw={500}> (you)</Text> : null}
